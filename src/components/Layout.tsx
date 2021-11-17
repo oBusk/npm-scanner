@@ -18,7 +18,9 @@ const Layout: FunctionComponent<LayoutProps> = ({
     return (
         <>
             <Head>
-                <title>{title ? `${title} • ` : ""}npm-diff.app 📦🔃</title>
+                <title>
+                    {title ? `${title} • ` : ""}npm-scanner.vercel.app 📦🔬
+                </title>
             </Head>
             <Stack
                 minHeight="100vh"
