@@ -4,9 +4,42 @@ import * as pacote from "pacote";
 import { ParsedUrlQuery } from "querystring";
 import Layout from "^/components/Layout";
 
+const VIRUSTOTAL_API_URL = "https://www.virustotal.com/api/v3";
+const RETRY_INTERVAL = 1500;
+
+function analyseUrl(url: string): Promise<VirusTotalUploadResponse> {
+    if (process.env.VIRUSTOTAL_API_KEY === undefined) {
+        throw new Error("VIRUSTOTAL_API_KEY is not defined");
+    }
+    return fetch(`${VIRUSTOTAL_API_URL}/urls`, {
+        method: "POST",
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/x-www-form-urlencoded",
+            "x-apikey": process.env.VIRUSTOTAL_API_KEY,
+        },
+        body: new URLSearchParams({
+            url,
+        }),
+    }).then((res) => res.json());
+}
+
+function getAnalysis(id: string): Promise<any> {
+    if (process.env.VIRUSTOTAL_API_KEY === undefined) {
+        throw new Error("VIRUSTOTAL_API_KEY is not defined");
+    }
+    return fetch(`${VIRUSTOTAL_API_URL}/urls/${id}`, {
+        method: "GET",
+        headers: {
+            Accept: "application/json",
+            "x-apikey": process.env.VIRUSTOTAL_API_KEY,
+        },
+    }).then((res) => res.json());
+}
+
 interface VirusTotalUploadResponse {
     data: {
-        type: string;
+        type: "analysis";
         id: string;
     };
 }
@@ -28,33 +61,38 @@ export const getServerSideProps: GetServerSideProps<Props, Params> = async ({
 
     const spec = Array.isArray(parts) ? parts.join("/") : parts;
 
+    console.log(`Fetching ${spec}`);
+
     const url = await pacote.resolve(spec);
+
     try {
-        if (process.env.VIRUSTOTAL_API_KEY == null) {
-            throw new Error("API key missing");
+        const analysis = await analyseUrl(url);
+
+        const [, id] = analysis.data.id.split("-");
+
+        let maxAttempts = 10;
+        let analysisResult: any = await getAnalysis(id);
+
+        while (
+            !analysisResult?.data?.attributes?.last_http_response_content_sha256
+        ) {
+            if (--maxAttempts === 0) {
+                throw new Error("Max attempts reached");
+            }
+
+            console.log(`Waiting for analysis to complete`, { maxAttempts });
+
+            await new Promise((resolve) => setTimeout(resolve, RETRY_INTERVAL));
+
+            analysisResult = await getAnalysis(id);
         }
-
-        const result: VirusTotalUploadResponse = await fetch(
-            "https://www.virustotal.com/api/v3/urls",
-            {
-                method: "POST",
-                headers: {
-                    Accept: "application/json",
-                    "Content-Type": "application/x-www-form-urlencoded",
-                    "x-apikey": process.env.VIRUSTOTAL_API_KEY,
-                },
-                body: new URLSearchParams({
-                    url,
-                }),
-            },
-        ).then((res) => res.json());
-
-        const [, id] = result.data.id.split("-");
+        const fileHash =
+            analysisResult?.data?.attributes?.last_http_response_content_sha256;
 
         return {
             redirect: {
                 permanent: false,
-                destination: `https://www.virustotal.com/gui/url/${id}`,
+                destination: `https://www.virustotal.com/gui/file/${fileHash}`,
             },
         };
     } catch (error: any) {
