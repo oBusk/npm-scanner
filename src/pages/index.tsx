@@ -11,7 +11,7 @@ export default function Home() {
             search: HTMLInputElement;
         };
 
-        window.open(`/${target.search.value}`, "_blank");
+        window.open(`/${encodeURIComponent(target.search.value)}`, "_blank");
     };
 
     return (
