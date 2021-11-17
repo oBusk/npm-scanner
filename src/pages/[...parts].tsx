@@ -54,6 +54,7 @@ interface Params extends ParsedUrlQuery {
 
 export const getServerSideProps: GetServerSideProps<Props, Params> = async ({
     params: { parts } = {},
+    res,
 }) => {
     if (!parts) {
         throw new Error("No spec specified");
@@ -88,6 +89,17 @@ export const getServerSideProps: GetServerSideProps<Props, Params> = async ({
         }
         const fileHash =
             analysisResult?.data?.attributes?.last_http_response_content_sha256;
+
+        const minute = 60;
+        const hour = 60 * minute;
+        const day = 24 * hour;
+
+        res.setHeader(
+            "cache-control",
+            ["public", `max-age=${30 * minute}`, `s-maxage=${1 * day}`].join(
+                ", ",
+            ),
+        );
 
         return {
             redirect: {
