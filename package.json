@@ -40,7 +40,7 @@
         "lint-staged": "lint-staged"
     },
     "dependencies": {
-        "@chakra-ui/react": "^1.7.2",
+        "@chakra-ui/react": "^1.7.4",
         "@emotion/react": "^11.7.0",
         "@emotion/styled": "^11.6.0",
         "framer-motion": "^5.4.4",
