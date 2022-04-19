@@ -121,7 +121,7 @@ const PackageScanner: NextPage<Props> = ({ error }) => {
     return (
         <Layout>
             <VStack>
-                <Box align="center" justify="center" maxWidth="500px">
+                <Box textAlign="center" maxWidth="500px">
                     <h1>Something went wrong...</h1>
                     <Code>{JSON.stringify(error, null, 2)}</Code>
                 </Box>
