@@ -44,7 +44,7 @@
         "@emotion/react": "^11.9.0",
         "@emotion/styled": "^11.8.1",
         "next": "^12.1.5",
-        "pacote": "^13.1.1",
+        "pacote": "^13.4.0",
         "react": "^18.0.0",
         "react-dom": "^18.0.0",
         "react-icons": "^4.3.1"
